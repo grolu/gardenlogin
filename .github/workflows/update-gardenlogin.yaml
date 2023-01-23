@@ -8,8 +8,8 @@ jobs:
   update_gardenlogin_in_homebrew_tap_and_chocolatey_packages:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # pin@v2.4.0
-      - uses: actions/setup-go@331ce1d993939866bb63c32c6cbbfd48fa76fc57 # pin@v2.1.4
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # pin@v3.3.0
+      - uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # pin@v3.5.0
         with:
           go-version: '^1.17'
       - name: Build the binary-files
@@ -18,17 +18,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install make -y
           make build
-          echo ::set-output name=latest_release_filtered_tag::${GITHUB_REF##*/}
+          echo "latest_release_filtered_tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
       - name: Upload binaries to release
-        uses: AButler/upload-release-assets@ec6d3263266dc57eb6645b5f75e827987f7c217d # pin@v2.0
+        uses: AButler/upload-release-assets@c94805dc72e4b20745f543da0f62eaee7722df7a # pin@v2.0.2
         with:
           files: 'bin/darwin-amd64/gardenlogin_darwin_amd64;bin/darwin-arm64/gardenlogin_darwin_arm64;bin/linux-amd64/gardenlogin_linux_amd64;bin/windows-amd64/gardenlogin_windows_amd64.exe'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: ${{ steps.build_binary_files.outputs.latest_release_filtered_tag }}
+          release-tag: ${{ env.latest_release_filtered_tag }}
       - name: Get token for gardener-github-pkg-mngr app
         if: github.event.release.prerelease == false
         id: gardener-github-workflows
-        uses: getsentry/action-github-app-token@38a3ce582e170ddfe8789f509597c6944f2292a9 # pin@v1.0.6
+        uses: getsentry/action-github-app-token@97c9e23528286821f97fba885c1b1123284b29cc # pin@v2.0.0
         with:
           app_id: ${{ secrets.GARDENER_GITHUB_WORKFLOW_PKG_MNGR_APP_ID }}
           private_key: ${{ secrets.GARDENER_GITHUB_WORKFLOW_PKG_MNGR_APP_PRIVATE_KEY }}
@@ -38,7 +38,7 @@ jobs:
           darwin_sha256sum_amd64=$(sha256sum bin/darwin-amd64/gardenlogin_darwin_amd64 | awk '{print $1}')
           darwin_sha256sum_arm64=$(sha256sum bin/darwin-arm64/gardenlogin_darwin_arm64 | awk '{print $1}')
           linux_sha256sum_amd64=$(sha256sum bin/linux-amd64/gardenlogin_linux_amd64 | awk '{print $1}')
-          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ steps.build_binary_files.outputs.latest_release_filtered_tag }}"'", "darwin_sha_amd64": "'"$darwin_sha256sum_amd64"'", "darwin_sha_arm64": "'"$darwin_sha256sum_arm64"'", "linux_sha_amd64": "'"$linux_sha256sum_amd64"'"}}'
+          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ env.latest_release_filtered_tag }}"'", "darwin_sha_amd64": "'"$darwin_sha256sum_amd64"'", "darwin_sha_arm64": "'"$darwin_sha256sum_arm64"'", "linux_sha_amd64": "'"$linux_sha256sum_amd64"'"}}'
           echo "${data}"
           curl -X POST https://api.github.com/repos/${{ github.repository_owner }}/homebrew-tap/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
@@ -48,7 +48,7 @@ jobs:
         if: github.event.release.prerelease == false
         run: |
           windows_sha256sum=$(sha256sum bin/windows-amd64/gardenlogin_windows_amd64.exe | awk '{print $1}')
-          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ steps.build_binary_files.outputs.latest_release_filtered_tag }}"'", "windows_sha": "'"$windows_sha256sum"'"}}'
+          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ env.latest_release_filtered_tag }}"'", "windows_sha": "'"$windows_sha256sum"'"}}'
           echo "${data}"
           curl -X POST https://api.github.com/repos/${{ github.repository_owner }}/chocolatey-packages/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
