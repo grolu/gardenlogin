@@ -35,10 +35,11 @@ jobs:
       - name: Send update with latest versions to ${{ github.repository_owner }}/homebrew-tap
         if: github.event.release.prerelease == false
         run: |
+          latest_release_filtered_tag=${{ env.latest_release_filtered_tag }}
           darwin_sha256sum_amd64=$(sha256sum bin/darwin-amd64/gardenlogin_darwin_amd64 | awk '{print $1}')
           darwin_sha256sum_arm64=$(sha256sum bin/darwin-arm64/gardenlogin_darwin_arm64 | awk '{print $1}')
           linux_sha256sum_amd64=$(sha256sum bin/linux-amd64/gardenlogin_linux_amd64 | awk '{print $1}')
-          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ env.latest_release_filtered_tag }}"'", "darwin_sha_amd64": "'"$darwin_sha256sum_amd64"'", "darwin_sha_arm64": "'"$darwin_sha256sum_arm64"'", "linux_sha_amd64": "'"$linux_sha256sum_amd64"'"}}'
+          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"$latest_release_filtered_tag"'", "darwin_sha_amd64": "'"$darwin_sha256sum_amd64"'", "darwin_sha_arm64": "'"$darwin_sha256sum_arm64"'", "linux_sha_amd64": "'"$linux_sha256sum_amd64"'"}}'
           echo "${data}"
           curl -X POST https://api.github.com/repos/${{ github.repository_owner }}/homebrew-tap/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
@@ -47,8 +48,9 @@ jobs:
       - name: Send update with latest versions to ${{ github.repository_owner }}/chocolatey-packages
         if: github.event.release.prerelease == false
         run: |
+          latest_release_filtered_tag=${{ env.latest_release_filtered_tag }}
           windows_sha256sum=$(sha256sum bin/windows-amd64/gardenlogin_windows_amd64.exe | awk '{print $1}')
-          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"${{ env.latest_release_filtered_tag }}"'", "windows_sha": "'"$windows_sha256sum"'"}}'
+          data='{"event_type": "update", "client_payload": { "component": "gardenlogin", "tag": "'"$latest_release_filtered_tag"'", "windows_sha": "'"$windows_sha256sum"'"}}'
           echo "${data}"
           curl -X POST https://api.github.com/repos/${{ github.repository_owner }}/chocolatey-packages/dispatches \
           -H 'Accept: application/vnd.github.everest-preview+json' \
